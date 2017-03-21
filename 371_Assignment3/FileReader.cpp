@@ -8,6 +8,8 @@ std::vector<std::string> FileReader::fileLines = std::vector<std::string>();
 
 std::vector<std::string> FileReader::readFile() {
 
+	std::cout << "Reading file..." << std::endl;
+
 	std::string input_file_path = "scene.txt";
 	std::vector<std::string> input_file_lines;
 	std::ifstream input_file_stream(input_file_path, std::ios::in);
@@ -26,11 +28,16 @@ std::vector<std::string> FileReader::readFile() {
 
 	fileLines = input_file_lines;
 
+	std::cout << "Finished reading file." << std::endl;
+
 	return input_file_lines;
 
 }
 
 Scene * FileReader::buildScene() {
+
+	std::cout << "Building scene from file data..." << std::endl;
+
 	Scene* scene = new Scene();
 
 	int currLine = 0;
@@ -301,6 +308,8 @@ Scene * FileReader::buildScene() {
 
 		}
 	}
+
+	std::cout << "Finished building scene." << std::endl;
 
 	return scene;
 
