@@ -11,5 +11,4 @@ public:
 	float fl;
 	float ar;
 
-
 };

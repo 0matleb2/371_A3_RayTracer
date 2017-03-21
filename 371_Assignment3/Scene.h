@@ -21,6 +21,10 @@ public:
 	std::vector<Triangle*> triangles;
 	std::vector<Light*> lights;
 
+	float width;
+	float height;
+
+	glm::vec3 backgroundColor;
 
 
 };

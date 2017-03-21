@@ -230,10 +230,10 @@ Scene * FileReader::buildScene() {
 			currLine++;
 			float x, y, z;
 			sscanf(fileLines[currLine].c_str(), "%*s %f %f %f", &x, &y, &z);
-			sphere->pos.x = x;
-			sphere->pos.y = y;
-			sphere->pos.z = z;
-			std::cout << sphere->pos.x << " " << sphere->pos.y << " " << sphere->pos.z << std::endl;
+			sphere->center.x = x;
+			sphere->center.y = y;
+			sphere->center.z = z;
+			std::cout << sphere->center.x << " " << sphere->center.y << " " << sphere->center.z << std::endl;
 
 			// Load sphere radius
 			currLine++;

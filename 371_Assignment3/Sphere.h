@@ -6,7 +6,7 @@ class Sphere {
 
 public:
 
-	glm::vec3 pos;
+	glm::vec3 center;
 	float r;
 
 	glm::vec3 ambColor;
