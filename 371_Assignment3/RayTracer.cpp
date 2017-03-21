@@ -64,7 +64,7 @@ std::vector<Ray*> RayTracer::generateRays(Camera* camera, int resScale) {
 	return rays;
 }
 
-bool RayTracer::intersectRaySphere(Ray * ray, Sphere * sphere, float &t) {
+bool RayTracer::intersectRaySphere(Ray * ray, Sphere * sphere, float &t, glm::vec3 & norm) {
 	
 	float t0, t1; // Intersection solutions
 	
@@ -84,22 +84,41 @@ bool RayTracer::intersectRaySphere(Ray * ray, Sphere * sphere, float &t) {
 
 	t = t0;
 
+	// Calculate normal at intersection point
+	norm = glm::normalize((ray->orig + t*ray->dir) - sphere->center);
+
 	return true;
 }
 
-bool RayTracer::intersectRayPlane(Ray * ray, Plane * plane, float & t) {
+
+
+
+
+
+
+bool RayTracer::intersectRayPlane(Ray * ray, Plane * plane, float & t, glm::vec3 & norm) {
 
 	float denom = glm::dot(plane->normal, ray->dir);
 	if (denom > 1e-6) {
 		glm::vec3 pr = plane->point - ray->orig;
 		t = glm::dot(pr, plane->normal) / denom;
+
+		// Calculate normal
+		norm = plane->normal;
+
 		return (t >= 0);
 	}
 
 	return false;
 }
 
-bool RayTracer::intersectRayTriangle(Ray * ray, Triangle * triangle, float & t) {
+
+
+
+
+
+
+bool RayTracer::intersectRayTriangle(Ray * ray, Triangle * triangle, float & t, glm::vec3 & norm) {
 	glm::vec3 e1, e2;  //Edge1, Edge2
 	glm::vec3 P, Q, T;
 	float det, inv_det, u, v;
@@ -138,6 +157,10 @@ bool RayTracer::intersectRayTriangle(Ray * ray, Triangle * triangle, float & t) 
 
 	if (out > EPSILON) { //ray intersection
 		t = out;
+
+		// Calculate normal
+		norm = glm::normalize(glm::cross(e2, e1));
+
 		return true;
 	}
 
@@ -145,11 +168,68 @@ bool RayTracer::intersectRayTriangle(Ray * ray, Triangle * triangle, float & t) 
 	return false;
 }
 
+
+
+
+
+
+
+
 glm::vec3 RayTracer::trace(Scene * scene, Ray * ray, int depth) {
 	if (depth > DMAX) return scene->backgroundColor;
+	float t;
+	float tmin = std::numeric_limits<float>::max();
+	glm::vec3 n, norm;
+	SceneGeometry * obj;
+
+	// Intersect each sphere
+	for (int i = 0, m = scene->spheres.size(); i < m; ++i) {
+		if (RayTracer::intersectRaySphere(ray, scene->spheres[i], t, n)) {
+			if (t < tmin) {
+				tmin = t;
+				norm = n;
+				obj = scene->spheres[i];
+			}
+		}
+	}
+
+	// Intersect each triangle
+	for (int i = 0, m = scene->triangles.size(); i < m; ++i) {
+		if (RayTracer::intersectRayTriangle(ray, scene->triangles[i], t, n)) {
+			if (t < tmin) {
+				tmin = t;
+				norm = n;
+				obj = scene->triangles[i];
+			}
+		}
+	}
+	
+	// Intersect the plane
+	if (RayTracer::intersectRayPlane(ray, scene->plane, t, n)) {
+		if (t < tmin) {
+			tmin = t;
+			norm = n;
+			obj = scene->plane;
+		}
+	}
+
+	// Return background color if no intersections
+	if (tmin - std::numeric_limits<float>::max() < EPSILON) {
+		return scene->backgroundColor;
+	}
+
+	glm::vec3 intersection = ray->orig + tmin*ray->dir;
+	glm::vec3 color = accLight(scene, intersection, obj);
+
 
 	return glm::vec3();
 }
+
+
+
+
+
+
 
 bool RayTracer::solveQuadratic(const float & a, const float & b, const float & c, float & x0, float & x1) {
 	float discr = b * b - 4 * a * c;
@@ -165,4 +245,62 @@ bool RayTracer::solveQuadratic(const float & a, const float & b, const float & c
 	if (x0 > x1) std::swap(x0, x1);
 
 	return true;
+}
+
+
+
+
+
+
+
+glm::vec3 RayTracer::accLight(Scene* scene, glm::vec3 intersection, SceneGeometry * obj) {
+	glm::vec3 color = obj->ambColor;
+
+	for (auto light : scene->lights) {
+
+		float t;
+		float tmin = glm::distance(light->pos, intersection);
+		glm::vec3 n;
+		bool shadowed = false;
+
+		Ray* shadowRay = new Ray(intersection, glm::normalize(light->pos - intersection));
+
+		// Intersect each sphere
+		for (int i = 0, m = scene->spheres.size(); i < m; ++i) {
+			if (RayTracer::intersectRaySphere(shadowRay, scene->spheres[i], t, n)) {
+				if (t < tmin) {
+					shadowed = true;
+					break;
+				}
+			}
+		}
+
+		if (!shadowed) {
+			// Intersect each triangle
+			for (int i = 0, m = scene->triangles.size(); i < m; ++i) {
+				if (RayTracer::intersectRayTriangle(shadowRay, scene->triangles[i], t, n)) {
+					if (t < tmin) {
+						shadowed = true;
+					}
+				}
+			}
+		}
+
+		if (!shadowed) {
+			// Intersect the plane
+			if (RayTracer::intersectRayPlane(shadowRay, scene->plane, t, n)) {
+				if (t < tmin) {
+					shadowed = true;
+				}
+			}
+		}
+
+		if (!shadowed) {
+			color += light->color; //LEFT OFF HEREEEE PHONG ETC
+		}
+
+	}
+
+
+
 }

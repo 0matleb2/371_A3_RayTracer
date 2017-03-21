@@ -1,16 +1,14 @@
 #pragma once
 #include "glm.hpp"
 
+#include "SceneGeometry.h"
 
-class Sphere {
+
+class Sphere : public SceneGeometry {
 
 public:
 
 	glm::vec3 center;
 	float r;
 
-	glm::vec3 ambColor;
-	glm::vec3 difColor;
-	glm::vec3 speColor;
-	float shiny;
 };

@@ -26,5 +26,6 @@ public:
 
 	glm::vec3 backgroundColor;
 
+	Scene() : backgroundColor(glm::vec3(0.0f, 0.0f, 0.0f)) {};
 
 };
