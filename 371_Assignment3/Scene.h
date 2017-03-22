@@ -21,11 +21,8 @@ public:
 	std::vector<Triangle*> triangles;
 	std::vector<Light*> lights;
 
-	float width;
-	float height;
-
 	glm::vec3 backgroundColor;
 
-	Scene() : backgroundColor(glm::vec3(0.0f, 0.0f, 0.0f)) {};
+	Scene() : backgroundColor(glm::vec3(0.01f, 0.01f, 0.02f)) {};
 
 };

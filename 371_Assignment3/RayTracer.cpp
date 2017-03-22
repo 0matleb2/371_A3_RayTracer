@@ -16,8 +16,9 @@ std::vector<Ray*> RayTracer::generateRays(Camera* camera, int resScale) {
 	std::vector<Ray*> tempRays;
 	std::vector<glm::vec3> pixels;
 
-	int rWidth = static_cast<int>(round(camera->ar * resScale * 3));
-	int rHeight = resScale * 3;
+
+	int rWidth = static_cast<int>(round(camera->ar * resScale));
+	int rHeight = resScale;
 
 	std::cout << "Resolution: " << rWidth << " x " << rHeight << std::endl;
 
@@ -47,7 +48,7 @@ std::vector<Ray*> RayTracer::generateRays(Camera* camera, int resScale) {
 				iCenter.z
 			};
 
-			std::cout << "Pixel(" << x << ", " << y << "): " << pixel.x << " " << pixel.y << " " << pixel.z << std::endl;
+			//std::cout << "Pixel(" << x << ", " << y << "): " << pixel.x << " " << pixel.y << " " << pixel.z << std::endl;
 
 			pixels.push_back(pixel);
 		}
@@ -99,9 +100,10 @@ bool RayTracer::intersectRaySphere(Ray * ray, Sphere * sphere, float &t, glm::ve
 bool RayTracer::intersectRayPlane(Ray * ray, Plane * plane, float & t, glm::vec3 & norm) {
 
 	float denom = glm::dot(plane->normal, ray->dir);
-	if (denom > 1e-6) {
-		glm::vec3 pr = plane->point - ray->orig;
-		t = glm::dot(pr, plane->normal) / denom;
+
+	if (abs(denom) > 1e-6) {
+
+		t = glm::dot(plane->point - ray->orig, plane->normal) / denom;
 
 		// Calculate normal
 		norm = plane->normal;
@@ -214,7 +216,7 @@ glm::vec3 RayTracer::trace(Scene * scene, Ray * ray, int depth) {
 	}
 
 	// Return background color if no intersections
-	if (tmin - std::numeric_limits<float>::max() < EPSILON) {
+	if (abs(tmin - std::numeric_limits<float>::max()) < EPSILON) {
 		return scene->backgroundColor;
 	}
 
@@ -222,7 +224,7 @@ glm::vec3 RayTracer::trace(Scene * scene, Ray * ray, int depth) {
 	glm::vec3 color = accLight(scene, intersection, obj);
 
 
-	return glm::vec3();
+	return color;
 }
 
 
@@ -256,51 +258,51 @@ bool RayTracer::solveQuadratic(const float & a, const float & b, const float & c
 glm::vec3 RayTracer::accLight(Scene* scene, glm::vec3 intersection, SceneGeometry * obj) {
 	glm::vec3 color = obj->ambColor;
 
-	for (auto light : scene->lights) {
+	//for (auto light : scene->lights) {
 
-		float t;
-		float tmin = glm::distance(light->pos, intersection);
-		glm::vec3 n;
-		bool shadowed = false;
+	//	float t;
+	//	float tmin = glm::distance(light->pos, intersection);
+	//	glm::vec3 n;
+	//	bool shadowed = false;
 
-		Ray* shadowRay = new Ray(intersection, glm::normalize(light->pos - intersection));
+	//	Ray* shadowRay = new Ray(intersection, glm::normalize(light->pos - intersection));
 
-		// Intersect each sphere
-		for (int i = 0, m = scene->spheres.size(); i < m; ++i) {
-			if (RayTracer::intersectRaySphere(shadowRay, scene->spheres[i], t, n)) {
-				if (t < tmin) {
-					shadowed = true;
-					break;
-				}
-			}
-		}
+	//	// Intersect each sphere
+	//	for (int i = 0, m = scene->spheres.size(); i < m; ++i) {
+	//		if (RayTracer::intersectRaySphere(shadowRay, scene->spheres[i], t, n)) {
+	//			if (t < tmin) {
+	//				shadowed = true;
+	//				break;
+	//			}
+	//		}
+	//	}
 
-		if (!shadowed) {
-			// Intersect each triangle
-			for (int i = 0, m = scene->triangles.size(); i < m; ++i) {
-				if (RayTracer::intersectRayTriangle(shadowRay, scene->triangles[i], t, n)) {
-					if (t < tmin) {
-						shadowed = true;
-					}
-				}
-			}
-		}
+	//	if (!shadowed) {
+	//		// Intersect each triangle
+	//		for (int i = 0, m = scene->triangles.size(); i < m; ++i) {
+	//			if (RayTracer::intersectRayTriangle(shadowRay, scene->triangles[i], t, n)) {
+	//				if (t < tmin) {
+	//					shadowed = true;
+	//				}
+	//			}
+	//		}
+	//	}
 
-		if (!shadowed) {
-			// Intersect the plane
-			if (RayTracer::intersectRayPlane(shadowRay, scene->plane, t, n)) {
-				if (t < tmin) {
-					shadowed = true;
-				}
-			}
-		}
+	//	if (!shadowed) {
+	//		// Intersect the plane
+	//		if (RayTracer::intersectRayPlane(shadowRay, scene->plane, t, n)) {
+	//			if (t < tmin) {
+	//				shadowed = true;
+	//			}
+	//		}
+	//	}
 
-		if (!shadowed) {
-			color += light->color; //LEFT OFF HEREEEE PHONG ETC
-		}
+	//	if (!shadowed) {
+	//		color += light->color; //LEFT OFF HEREEEE PHONG ETC
+	//	}
 
-	}
+	//}
 
-
+	return color;
 
 }
