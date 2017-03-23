@@ -35,9 +35,9 @@ std::vector<std::string> FileReader::readFile(int sceneNum) {
 	fileLines = input_file_lines;
 	loadedFilePath = input_file_path;
 
-	std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+	std::this_thread::sleep_for(std::chrono::milliseconds(500));
 	std::cout << "Finished loading file." << std::endl;
-	std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+	std::this_thread::sleep_for(std::chrono::milliseconds(500));
 
 
 	return input_file_lines;
@@ -169,7 +169,7 @@ Scene * FileReader::buildScene() {
 			//std::cout << plane->shiny << std::endl;
 
 			// Add plane to scene
-			scene->plane = plane;
+			scene->planes.push_back(plane);
 		}
 
 		// Generate triangle
@@ -330,9 +330,9 @@ Scene * FileReader::buildScene() {
 		}
 	}
 
-	std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+	std::this_thread::sleep_for(std::chrono::milliseconds(500));
 	std::cout << "Finished building scene." << std::endl;
-	std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+	std::this_thread::sleep_for(std::chrono::milliseconds(500));
 
 	return scene;
 

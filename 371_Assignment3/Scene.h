@@ -15,10 +15,10 @@ class Scene {
 public:
 
 	Camera* camera;
-	Plane* plane;
 
 	std::vector<Sphere*> spheres;
 	std::vector<Triangle*> triangles;
+	std::vector<Plane*> planes;
 	std::vector<Light*> lights;
 
 	glm::vec3 backgroundColor;

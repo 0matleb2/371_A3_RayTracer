@@ -273,11 +273,13 @@ glm::vec3 RayTracer::trace(Scene * scene, Ray * ray, int depth) {
 	}
 	
 	// Intersect the plane
-	if (RayTracer::intersectRayPlane(ray, scene->plane, t, n)) {
-		if (t < tmin) {
-			tmin = t;
-			norm = n;
-			obj = scene->plane;
+	for (int i = 0, m = scene->planes.size(); i < m; ++i) {
+		if (RayTracer::intersectRayPlane(ray, scene->planes[i], t, n)) {
+			if (t < tmin) {
+				tmin = t;
+				norm = n;
+				obj = scene->planes[i];
+			}
 		}
 	}
 
