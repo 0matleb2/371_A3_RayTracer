@@ -1,4 +1,7 @@
 #include <iostream>
+#include <stdio.h>
+#include <chrono>
+#include <thread>
 
 #include "RayTracer.h"
 
@@ -10,11 +13,13 @@ std::vector<Ray*> RayTracer::rays = std::vector<Ray*>();
 
 
 Image* RayTracer::render(Scene * scene, Options * options) {
+	int pixelsRendered = 0;
+	int lastPercentComplete = 0;
 
 	Image * image = generatePixels(scene, options);
 
 	for (auto pixel : image->pixels) {
-
+		
 		std::vector<Ray*> rays = generateRays(scene, options, pixel);
 
 		std::vector<glm::vec3> traces;
@@ -24,7 +29,18 @@ Image* RayTracer::render(Scene * scene, Options * options) {
 
 		pixel->color = average(traces);
 
+		pixelsRendered++;
+		int percentComplete = round((float(pixelsRendered) / image->pixels.size()) * 100);
+		
+		if (percentComplete != lastPercentComplete) {
+			printf("Tracing... %i%%\r", int(percentComplete));
+			fflush(stdout);
+			lastPercentComplete = percentComplete;
+		}
+
 	}
+
+	printf("\n");
 
 	return image;
 
@@ -36,27 +52,22 @@ Image* RayTracer::render(Scene * scene, Options * options) {
 
 
 Image* RayTracer::generatePixels(Scene * scene, Options * options) {
+	int pixelsCalculated = 0;
+	int lastPercentComplete = 0;
 
 	std::vector<Pixel*> pixels;
-
-	std::cout << "Computing pixel positions..." << std::endl;
 
 	int renderedResH = options->outputHeight * (int)pow(2, options->antialiasing);
 	int renderedResW = static_cast<int>(round(renderedResH * scene->camera->ar));
 
-	std::cout << "Resolution: " << renderedResW << " x " << renderedResH << std::endl;
+	std::cout << "Rendering at resolution: " << renderedResW << " x " << renderedResH << std::endl;
+	std::this_thread::sleep_for(std::chrono::milliseconds(1000));
 
 	float sHeight = 2 * scene->camera->fl * tan((scene->camera->fov / 2) * PI / 180);
 	float sWidth = scene->camera->ar * sHeight;
 
-	std::cout << "Scene width: " << sWidth << std::endl;
-	std::cout << "Scene height: " << sHeight << std::endl;
-
 	float pixelWidth = sWidth / renderedResW;
 	float pixelHeight = sHeight / renderedResH;
-
-	std::cout << "Pixel width: " << pixelWidth << std::endl;
-	std::cout << "Pixel height: " << pixelHeight << std::endl;
 
 	glm::vec3 iCenter = glm::vec3(scene->camera->pos.x, scene->camera->pos.y, scene->camera->pos.z - scene->camera->fl);
 
@@ -77,8 +88,19 @@ Image* RayTracer::generatePixels(Scene * scene, Options * options) {
 			//std::cout << "Pixel(" << x << ", " << y << "): " << pixel.x << " " << pixel.y << " " << pixel.z << std::endl;
 
 			pixels.push_back(pixel);
+
+			pixelsCalculated++;
+			int percentComplete = round((float(pixelsCalculated) / (renderedResW*renderedResH)) * 100);
+
+			if (percentComplete != lastPercentComplete) {
+				printf("Generating rays... %i%%\r", int(percentComplete));
+				fflush(stdout);
+				lastPercentComplete = percentComplete;
+			}
 		}
 	}
+
+	printf("\n");
 
 	Image * image = new Image(renderedResW, renderedResH, pixels);
 

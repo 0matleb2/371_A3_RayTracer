@@ -1,6 +1,8 @@
 #include <vector>
 #include <string>
 #include <fstream>
+#include <chrono>
+#include <thread>
 
 #include "FileReader.h"
 
@@ -16,7 +18,7 @@ std::vector<std::string> FileReader::readFile(int sceneNum) {
 	std::cout << "Loading file \"" << input_file_path << "\"..." << std::endl;
 
 	std::vector<std::string> input_file_lines;
-	std::ifstream input_file_stream(input_file_path, std::ios::in);
+	std::ifstream input_file_stream(std::string("scenes\\" + input_file_path), std::ios::in);
 
 	if (input_file_stream.is_open()) {
 		std::string line = "";
@@ -33,7 +35,9 @@ std::vector<std::string> FileReader::readFile(int sceneNum) {
 	fileLines = input_file_lines;
 	loadedFilePath = input_file_path;
 
-	std::cout << "Finished loading \"" << loadedFilePath << "\"." << std::endl;
+	std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+	std::cout << "Finished loading file." << std::endl;
+	std::this_thread::sleep_for(std::chrono::milliseconds(1000));
 
 
 	return input_file_lines;
@@ -326,7 +330,9 @@ Scene * FileReader::buildScene() {
 		}
 	}
 
+	std::this_thread::sleep_for(std::chrono::milliseconds(1000));
 	std::cout << "Finished building scene." << std::endl;
+	std::this_thread::sleep_for(std::chrono::milliseconds(1000));
 
 	return scene;
 
