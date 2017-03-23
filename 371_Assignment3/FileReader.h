@@ -11,8 +11,9 @@ class FileReader {
 public:
 	
 	static std::vector<std::string> fileLines;
+	static std::string loadedFilePath;
 
-	static std::vector<std::string> readFile();
+	static std::vector<std::string> readFile(int sceneNum);
 
 	static Scene* buildScene();
 

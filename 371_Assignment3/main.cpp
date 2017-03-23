@@ -2,49 +2,45 @@
 #include "Scene.h"
 #include "RayTracer.h"
 #include "CImg.h"
-#include "main.h"
+#include "Options.h"
+
 
 
 int main() {
-	int resScale = 300;
 
-	FileReader::readFile();
+
+	Options * options = new Options();
+	options->chooseOptions();
+
+
+	FileReader::readFile(options->sceneNum);
 	Scene * scene = FileReader::buildScene();
 
-	std::vector<Ray*> rays = RayTracer::generateRays(scene->camera, resScale);
-	std::vector<glm::vec3> pixels;
+	Image * image = RayTracer::render(scene, options);
 
-	for (auto ray : rays) {
-		pixels.push_back(RayTracer::trace(scene, ray, 0));
-	}
 
-	int rWidth = static_cast<int>(round(scene->camera->ar * resScale));
-	int rHeight = resScale;
 
-	
-	cimg_library::CImg<float> image(rWidth, rHeight, 1, 3, 0);
-	
-	for (int y = 0; y < rHeight; y++) {
+	cimg_library::CImg<float> cImage(image->resW, image->resH, 1, 3, 0);
 
-		for (int x = 0; x < rWidth; x++) {
+	for (int y = 0; y < image->resH; y++) {
 
-			int index = x + (y * rWidth);
-			float red = pixels[index].r * 255;
-			float green = pixels[index].g * 255;
-			float blue = pixels[index].b * 255;
+		for (int x = 0; x < image->resW; x++) {
 
-			image(x, y, 0, 0) = red;
-			image(x, y, 0, 1) = green;
-			image(x, y, 0, 2) = blue;
+			int index = x + (y * image->resW);
+			float red = image->pixels[index]->color.r * 255;
+			float green = image->pixels[index]->color.g * 255;
+			float blue = image->pixels[index]->color.b * 255;
+
+			cImage(x, y, 0, 0) = red;
+			cImage(x, y, 0, 1) = green;
+			cImage(x, y, 0, 2) = blue;
 		}
 	}
 
-	image.save("render.bmp");
-	cimg_library::CImgDisplay main_disp(image, "Render");
+	cImage.save("render.bmp");
+	cimg_library::CImgDisplay main_disp(cImage, "Mathieu's Ray Tracing Render");
 	while (!main_disp.is_closed()) {
 		main_disp.wait();
 	}
 
-	char c;
-	std::cin >> c;
 }

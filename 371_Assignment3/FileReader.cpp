@@ -7,12 +7,14 @@
 #define ASPECT_EPSILON 0.01
 
 std::vector<std::string> FileReader::fileLines = std::vector<std::string>();
+std::string FileReader::loadedFilePath = "";
 
-std::vector<std::string> FileReader::readFile() {
+std::vector<std::string> FileReader::readFile(int sceneNum) {
 
-	std::cout << "Reading file..." << std::endl;
+	std::string input_file_path = "scene" + std::to_string(sceneNum) + ".txt";
 
-	std::string input_file_path = "scene7.txt";
+	std::cout << "Loading file \"" << input_file_path << "\"..." << std::endl;
+
 	std::vector<std::string> input_file_lines;
 	std::ifstream input_file_stream(input_file_path, std::ios::in);
 
@@ -29,8 +31,10 @@ std::vector<std::string> FileReader::readFile() {
 	}
 
 	fileLines = input_file_lines;
+	loadedFilePath = input_file_path;
 
-	std::cout << "Finished reading file." << std::endl;
+	std::cout << "Finished loading \"" << loadedFilePath << "\"." << std::endl;
+
 
 	return input_file_lines;
 

@@ -9,44 +9,70 @@
 std::vector<Ray*> RayTracer::rays = std::vector<Ray*>();
 
 
-std::vector<Ray*> RayTracer::generateRays(Camera* camera, int resScale) {
+Image* RayTracer::render(Scene * scene, Options * options) {
+
+	Image * image = generatePixels(scene, options);
+
+	for (auto pixel : image->pixels) {
+
+		std::vector<Ray*> rays = generateRays(scene, options, pixel);
+
+		std::vector<glm::vec3> traces;
+		for (auto ray : rays) {
+			traces.push_back(trace(scene, ray, 0));
+		}
+
+		pixel->color = average(traces);
+
+	}
+
+	return image;
+
+}
+
+
+
+
+
+
+Image* RayTracer::generatePixels(Scene * scene, Options * options) {
+
+	std::vector<Pixel*> pixels;
 
 	std::cout << "Computing pixel positions..." << std::endl;
 
-	std::vector<Ray*> tempRays;
-	std::vector<glm::vec3> pixels;
+	int renderedResH = options->outputHeight * (int)pow(2, options->antialiasing);
+	int renderedResW = static_cast<int>(round(renderedResH * scene->camera->ar));
 
+	std::cout << "Resolution: " << renderedResW << " x " << renderedResH << std::endl;
 
-	int rWidth = static_cast<int>(round(camera->ar * resScale));
-	int rHeight = resScale;
-
-	std::cout << "Resolution: " << rWidth << " x " << rHeight << std::endl;
-
-	float sHeight = 2 * camera->fl * tan((camera->fov / 2) * PI / 180);
-	float sWidth = camera->ar * sHeight;
+	float sHeight = 2 * scene->camera->fl * tan((scene->camera->fov / 2) * PI / 180);
+	float sWidth = scene->camera->ar * sHeight;
 
 	std::cout << "Scene width: " << sWidth << std::endl;
 	std::cout << "Scene height: " << sHeight << std::endl;
 
-	float pixelWidth = sWidth / rWidth;
-	float pixelHeight = sHeight / rHeight;
+	float pixelWidth = sWidth / renderedResW;
+	float pixelHeight = sHeight / renderedResH;
 
 	std::cout << "Pixel width: " << pixelWidth << std::endl;
 	std::cout << "Pixel height: " << pixelHeight << std::endl;
 
-	glm::vec3 iCenter = glm::vec3(camera->pos.x, camera->pos.y, camera->pos.z - camera->fl);
-
+	glm::vec3 iCenter = glm::vec3(scene->camera->pos.x, scene->camera->pos.y, scene->camera->pos.z - scene->camera->fl);
 
 	// Calculate pixel locations
-	for (int y = 0; y < rHeight; ++y) {
+	for (int y = 0; y < renderedResH; ++y) {
 
-		for (int x = 0; x < rWidth; ++x) {
+		for (int x = 0; x < renderedResW; ++x) {
 
-			glm::vec3 pixel = {
+			glm::vec3 pixelPos = {
 				(iCenter.x - sWidth / 2) + (pixelWidth / 2) + (x * pixelWidth),
 				(iCenter.y + sHeight / 2) - (pixelHeight / 2) - (y * pixelHeight),
 				iCenter.z
 			};
+
+			Pixel * pixel = new Pixel();
+			pixel->pos = pixelPos;
 
 			//std::cout << "Pixel(" << x << ", " << y << "): " << pixel.x << " " << pixel.y << " " << pixel.z << std::endl;
 
@@ -54,16 +80,34 @@ std::vector<Ray*> RayTracer::generateRays(Camera* camera, int resScale) {
 		}
 	}
 
-	// Generate rays
-	for (auto pixel : pixels) {
-		glm::vec3 direction = glm::normalize(pixel - camera->pos);
-		tempRays.push_back(new Ray(camera->pos, direction));
-	}
+	Image * image = new Image(renderedResW, renderedResH, pixels);
 
-	rays = tempRays;
+	return image;
+}
+
+
+
+
+
+std::vector<Ray*> RayTracer::generateRays(Scene * scene, Options * options, Pixel * pixel) {
+
+	std::vector<Ray *> rays;
+
+	// Generate rays
+	if (options->softShadows == 0) {
+		glm::vec3 direction = glm::normalize(pixel->pos - scene->camera->pos);
+		rays.push_back(new Ray(scene->camera->pos, direction));
+	}
+	else {
+		//TODO generate dithered rays
+	}
 
 	return rays;
 }
+
+
+
+
 
 bool RayTracer::intersectRaySphere(Ray * ray, Sphere * sphere, float &t, glm::vec3 & norm) {
 	
@@ -305,4 +349,25 @@ glm::vec3 RayTracer::accLight(Scene* scene, glm::vec3 intersection, SceneGeometr
 
 	return color;
 
+}
+
+glm::vec3 RayTracer::average(std::vector<glm::vec3> traces) {
+	float r = 0.0f, g = 0.0f, b = 0.0f;
+	for (auto trace : traces) {
+		r += trace.r;
+		g += trace.g;
+		b += trace.b;
+	}
+	int s = traces.size();
+	r /= s;
+	g /= s;
+	b /= s;
+	return glm::vec3(r, g, b);
+}
+
+std::vector<Pixel*> RayTracer::downsample(std::vector<Pixel*> image) {
+
+
+
+	return std::vector<Pixel*>();
 }

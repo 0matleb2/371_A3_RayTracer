@@ -145,14 +145,17 @@
   <ItemGroup>
     <ClCompile Include="FileReader.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="Options.cpp" />
     <ClCompile Include="RayTracer.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Camera.h" />
     <ClInclude Include="CImg.h" />
     <ClInclude Include="FileReader.h" />
+    <ClInclude Include="Image.h" />
     <ClInclude Include="Light.h" />
-    <ClInclude Include="main.h" />
+    <ClInclude Include="Options.h" />
+    <ClInclude Include="Pixel.h" />
     <ClInclude Include="Plane.h" />
     <ClInclude Include="Ray.h" />
     <ClInclude Include="RayTracer.h" />
