@@ -1,3 +1,5 @@
+#include <random>
+
 #include "FileReader.h"
 #include "Scene.h"
 #include "RayTracer.h"
@@ -38,7 +40,7 @@ int main() {
 	}
 
 	cImage.save("render.bmp");
-	cimg_library::CImgDisplay main_disp(cImage, "Mathieu's Ray Tracing Render");
+	cimg_library::CImgDisplay main_disp(cImage, "Mathieu's Ray Tracer");
 	while (!main_disp.is_closed()) {
 		main_disp.wait();
 	}

@@ -43,7 +43,7 @@ private:
 
 	static glm::vec3 average(std::vector<glm::vec3> traces);
 
-	static std::vector<Pixel*> downsample(std::vector<Pixel*> image);
+	static Image * downsample(Image * image, int & downsampledPixels, int pixelsToDownsample, int & lastPercent);
 };
 
 

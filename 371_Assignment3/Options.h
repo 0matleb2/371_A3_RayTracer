@@ -11,6 +11,9 @@ public:
 	int antialiasing;
 	int softShadows;
 
+	float pixelW;
+	float pixelH;
+
 	void chooseOptions();
 
 private:

@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <chrono>
 #include <thread>
+#include <random>
 
 #include "RayTracer.h"
 
@@ -9,7 +10,16 @@
 #define EPSILON 0.000001
 
 
+
 std::vector<Ray*> RayTracer::rays = std::vector<Ray*>();
+
+int sumNdiv4i(int n, int i) {
+	int sum = 0;
+	for (int j = 0; j < i; j++) {
+		sum += n / int(pow(4, j));
+	}
+	return sum;
+}
 
 
 Image* RayTracer::render(Scene * scene, Options * options) {
@@ -42,6 +52,16 @@ Image* RayTracer::render(Scene * scene, Options * options) {
 
 	printf("\n");
 
+	int downsampledPixels = 0;
+	int lastPercent = 0;
+	int n = image->resH * image->resW;
+	int pixelsToDown = sumNdiv4i(n, options->antialiasing);
+
+	for (int d = options->antialiasing; d > 0; d--) {
+		image = downsample(image, downsampledPixels, pixelsToDown, lastPercent);
+	}
+	printf("\n");
+
 	return image;
 
 }
@@ -68,6 +88,8 @@ Image* RayTracer::generatePixels(Scene * scene, Options * options) {
 
 	float pixelWidth = sWidth / renderedResW;
 	float pixelHeight = sHeight / renderedResH;
+	options->pixelW = pixelWidth;
+	options->pixelH = pixelHeight;
 
 	glm::vec3 iCenter = glm::vec3(scene->camera->pos.x, scene->camera->pos.y, scene->camera->pos.z - scene->camera->fl);
 
@@ -121,7 +143,22 @@ std::vector<Ray*> RayTracer::generateRays(Scene * scene, Options * options, Pixe
 		rays.push_back(new Ray(scene->camera->pos, direction));
 	}
 	else {
-		//TODO generate dithered rays
+
+		std::random_device rd;  //Will be used to obtain a seed for the random number engine
+		std::mt19937 gen(rd()); //Standard mersenne_twister_engine seeded with rd()
+		std::uniform_real_distribution<> dis(0, 1);
+
+		int numDithRays = pow(2, options->softShadows);
+		for (int i = 0; i < numDithRays; ++i) {
+			glm::vec3 dCenter = pixel->pos;
+			dCenter.x -= options->pixelW / 2;
+			dCenter.y -= options->pixelH / 2;
+			dCenter.x += options->pixelW * dis(gen);
+		    dCenter.y -= options->pixelH * dis(gen);
+
+			glm::vec3 direction = glm::normalize(dCenter - scene->camera->pos);
+			rays.push_back(new Ray(scene->camera->pos, direction));
+		}
 	}
 
 	return rays;
@@ -389,9 +426,42 @@ glm::vec3 RayTracer::average(std::vector<glm::vec3> traces) {
 	return glm::vec3(r, g, b);
 }
 
-std::vector<Pixel*> RayTracer::downsample(std::vector<Pixel*> image) {
+Image * RayTracer::downsample(Image * image, int & downsampledPixels, int pixelsToDownsample, int & lastPercent) {
 
 
+	int dHeight = image->resH / 2;
+	int dWidth = image->resW / 2;
 
-	return std::vector<Pixel*>();
+	std::vector<Pixel*> dPixels;
+
+	for (int y = 0; y < dHeight; ++y) {
+
+		for (int x = 0; x < dWidth; ++x) {
+
+
+			std::vector<glm::vec3> samples;
+
+			samples.push_back(image->pixels[x * 2 + image->resW*y * 2]->color);
+			samples.push_back(image->pixels[x * 2 + 1 + image->resW*y * 2]->color);
+			samples.push_back(image->pixels[x * 2 + image->resW*(y * 2 + 1)]->color);
+			samples.push_back(image->pixels[x * 2 + 1 + image->resW*(y * 2 + 1)]->color);
+
+			Pixel * dPixel = new Pixel();
+			dPixel->color = average(samples);
+			dPixels.push_back(dPixel);
+
+			downsampledPixels = downsampledPixels + 4;
+			int percentComplete = round((float(downsampledPixels) / pixelsToDownsample) * 100);
+
+			if (percentComplete != lastPercent) {
+				printf("Downsampling... %i%%\r", int(percentComplete));
+				fflush(stdout);
+				lastPercent = percentComplete;
+			}
+		}
+	}
+
+	Image * dImage = new Image(dWidth, dHeight, dPixels);
+
+	return dImage;
 }
