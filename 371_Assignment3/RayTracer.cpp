@@ -35,6 +35,7 @@ void RayTracer::traceSection(std::vector<Pixel*> & pixels, int start, int count,
 
 		for (auto ray : rays) {
 			traces.push_back(trace(scene, ray, 0));
+			delete ray;
 		}
 
 		pixels[i]->color = average(traces);
@@ -82,27 +83,6 @@ Image* RayTracer::render(Scene * scene, Options * options) {
 	t6.join();
 	t7.join();
 
-	//for (auto pixel : image->pixels) {
-	//	
-	//	std::vector<Ray*> rays = generateRays(scene, options, pixel);
-
-	//	std::vector<glm::vec3> traces;
-	//	for (auto ray : rays) {
-	//		traces.push_back(trace(scene, ray, 0));
-	//	}
-
-	//	pixel->color = average(traces);
-
-	//	pixelsRendered++;
-	//	int percentComplete = round((float(pixelsRendered) / image->pixels.size()) * 100);
-	//	
-	//	if (percentComplete != lastPercentComplete) {
-	//		printf("Tracing... %i%%\r", int(percentComplete));
-	//		fflush(stdout);
-	//		lastPercentComplete = percentComplete;
-	//	}
-
-	//}
 
 	printf("\n");
 
