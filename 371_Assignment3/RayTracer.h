@@ -46,6 +46,9 @@ private:
 	static Image * downsample(Image * image, int & downsampledPixels, int pixelsToDownsample, int & lastPercent);
 
 	static glm::vec3 phong(Light * light, Ray * shadowRay, SceneGeometry * obj, glm::vec3 norm, glm::vec3 v);
+
+	static void traceSection(std::vector<Pixel*>& pixels, int start, int count, Scene * scene, Options * options, int & pixelsRendered, int & lastPercentComplete);
+
 };
 
 

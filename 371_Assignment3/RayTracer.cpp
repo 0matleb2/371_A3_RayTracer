@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <chrono>
 #include <thread>
+#include <mutex>
 #include <random>
 
 #include "RayTracer.h"
@@ -10,7 +11,7 @@
 #define EPSILON 0.000001
 #define DMAX 2
 
-
+std::mutex mtx;
 
 std::vector<Ray*> RayTracer::rays = std::vector<Ray*>();
 
@@ -23,33 +24,85 @@ int sumNdiv4i(int n, int i) {
 }
 
 
+
+void RayTracer::traceSection(std::vector<Pixel*> & pixels, int start, int count, Scene* scene, Options * options, int & pixelsRendered, int & lastPercentComplete) {
+
+	for (int i = start; i < start + count; ++i) {
+
+		std::vector<Ray*> rays = generateRays(scene, options, pixels[i]);
+
+		std::vector<glm::vec3> traces;
+
+		for (auto ray : rays) {
+			traces.push_back(trace(scene, ray, 0));
+		}
+
+		pixels[i]->color = average(traces);
+
+
+		mtx.lock();
+		pixelsRendered++;
+		int percentComplete = round((float(pixelsRendered) / pixels.size()) * 100);
+
+		if (percentComplete != lastPercentComplete) {
+			printf("Tracing... %i%%\r", int(percentComplete));
+			fflush(stdout);
+			lastPercentComplete = percentComplete;
+		}
+		mtx.unlock();
+
+
+	}
+}
+
+
 Image* RayTracer::render(Scene * scene, Options * options) {
 	int pixelsRendered = 0;
 	int lastPercentComplete = 0;
 
 	Image * image = generatePixels(scene, options);
 
-	for (auto pixel : image->pixels) {
-		
-		std::vector<Ray*> rays = generateRays(scene, options, pixel);
+	// Multithread
+	int size = image->resW * image->resH;
 
-		std::vector<glm::vec3> traces;
-		for (auto ray : rays) {
-			traces.push_back(trace(scene, ray, 0));
-		}
+	std::thread t0(traceSection, image->pixels, 0, size/8, scene, options, std::ref(pixelsRendered), std::ref(lastPercentComplete));
+	std::thread t1(traceSection, image->pixels, size/8, size / 8, scene, options, std::ref(pixelsRendered), std::ref(lastPercentComplete));
+	std::thread t2(traceSection, image->pixels, size/4, size / 8, scene, options, std::ref(pixelsRendered), std::ref(lastPercentComplete));
+	std::thread t3(traceSection, image->pixels, 3 * size / 8, size / 8, scene, options, std::ref(pixelsRendered), std::ref(lastPercentComplete));
+	std::thread t4(traceSection, image->pixels, size / 2, size / 8, scene, options, std::ref(pixelsRendered), std::ref(lastPercentComplete));
+	std::thread t5(traceSection, image->pixels, 5 * size / 8, size / 8, scene, options, std::ref(pixelsRendered), std::ref(lastPercentComplete));
+	std::thread t6(traceSection, image->pixels, 3 * size / 4, size / 8, scene, options, std::ref(pixelsRendered), std::ref(lastPercentComplete));
+	std::thread t7(traceSection, image->pixels, 7 * size / 8, size / 8, scene, options, std::ref(pixelsRendered), std::ref(lastPercentComplete));
+	t0.join();
+	t1.join();
+	t2.join();
+	t3.join();
+	t4.join();
+	t5.join();
+	t6.join();
+	t7.join();
 
-		pixel->color = average(traces);
+	//for (auto pixel : image->pixels) {
+	//	
+	//	std::vector<Ray*> rays = generateRays(scene, options, pixel);
 
-		pixelsRendered++;
-		int percentComplete = round((float(pixelsRendered) / image->pixels.size()) * 100);
-		
-		if (percentComplete != lastPercentComplete) {
-			printf("Tracing... %i%%\r", int(percentComplete));
-			fflush(stdout);
-			lastPercentComplete = percentComplete;
-		}
+	//	std::vector<glm::vec3> traces;
+	//	for (auto ray : rays) {
+	//		traces.push_back(trace(scene, ray, 0));
+	//	}
 
-	}
+	//	pixel->color = average(traces);
+
+	//	pixelsRendered++;
+	//	int percentComplete = round((float(pixelsRendered) / image->pixels.size()) * 100);
+	//	
+	//	if (percentComplete != lastPercentComplete) {
+	//		printf("Tracing... %i%%\r", int(percentComplete));
+	//		fflush(stdout);
+	//		lastPercentComplete = percentComplete;
+	//	}
+
+	//}
 
 	printf("\n");
 
