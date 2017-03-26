@@ -51,22 +51,6 @@ void Options::chooseOptions() {
 	}
 
 
-	bool choosingSoftShadows = true;
-	while (choosingSoftShadows) {
-		std::cout << "What level of soft shadows do you want? (0-5)" << std::endl;
-		std::cout << "Choose an option:  ";
-
-		int i = getUserInputInteger();
-		if (i >= 0 && i <= 5) {
-			softShadows = i;
-			choosingSoftShadows = false;
-		}
-
-		std::cout << std::endl;
-	}
-
-
-
 	bool choosingAntialiasing = true;
 	while (choosingAntialiasing) {
 		std::cout << "What level of antialiasing do you want? (0-3)" << std::endl;

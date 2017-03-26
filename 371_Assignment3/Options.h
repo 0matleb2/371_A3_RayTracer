@@ -9,7 +9,6 @@ public:
 	int sceneNum;
 	int outputHeight;
 	int antialiasing;
-	int softShadows;
 
 	float pixelW;
 	float pixelH;

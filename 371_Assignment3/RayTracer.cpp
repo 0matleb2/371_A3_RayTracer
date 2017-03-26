@@ -55,9 +55,16 @@ Image* RayTracer::render(Scene * scene, Options * options) {
 	int downsampledPixels = 0;
 	int lastPercent = 0;
 	int n = image->resH * image->resW;
-	int pixelsToDown = sumNdiv4i(n, options->antialiasing);
+	int downsamplesTimes;
+	if (options->antialiasing == 1 || options->antialiasing == 2) {
+		downsamplesTimes = 1;
+	}
+	else if (options->antialiasing == 3) {
+		downsamplesTimes = 2;
+	}
+	int pixelsToDown = sumNdiv4i(n, downsamplesTimes);
 
-	for (int d = options->antialiasing; d > 0; d--) {
+	for (int d = downsamplesTimes; d > 0; d--) {
 		image = downsample(image, downsampledPixels, pixelsToDown, lastPercent);
 	}
 	printf("\n");
@@ -77,7 +84,18 @@ Image* RayTracer::generatePixels(Scene * scene, Options * options) {
 
 	std::vector<Pixel*> pixels;
 
-	int renderedResH = options->outputHeight * (int)pow(2, options->antialiasing);
+
+	int renderedResH;
+	if (options->antialiasing == 0) {
+		renderedResH = options->outputHeight;
+	}
+	else if (options->antialiasing == 1 || options->antialiasing == 2) {
+		renderedResH = options->outputHeight * 2;
+	}
+	else if (options->antialiasing == 3) {
+		renderedResH = options->outputHeight * 4;
+	}
+
 	int renderedResW = static_cast<int>(round(renderedResH * scene->camera->ar));
 
 	std::cout << "Rendering at resolution: " << renderedResW << " x " << renderedResH << std::endl;
@@ -138,23 +156,40 @@ std::vector<Ray*> RayTracer::generateRays(Scene * scene, Options * options, Pixe
 	std::vector<Ray *> rays;
 
 	// Generate rays
-	if (options->softShadows == 0) {
+	if (options->antialiasing == 0) {
 		glm::vec3 direction = glm::normalize(pixel->pos - scene->camera->pos);
 		rays.push_back(new Ray(scene->camera->pos, direction));
 	}
-	else {
+	else if (options->antialiasing == 1) {
 
 		std::random_device rd;  //Will be used to obtain a seed for the random number engine
 		std::mt19937 gen(rd()); //Standard mersenne_twister_engine seeded with rd()
 		std::uniform_real_distribution<> dis(0, 1);
 
-		int numDithRays = pow(2, options->softShadows);
+		int numDithRays = 4;
 		for (int i = 0; i < numDithRays; ++i) {
 			glm::vec3 dCenter = pixel->pos;
 			dCenter.x -= options->pixelW / 2;
 			dCenter.y -= options->pixelH / 2;
 			dCenter.x += options->pixelW * dis(gen);
 		    dCenter.y -= options->pixelH * dis(gen);
+
+			glm::vec3 direction = glm::normalize(dCenter - scene->camera->pos);
+			rays.push_back(new Ray(scene->camera->pos, direction));
+		}
+	}
+	else if (options->antialiasing > 1) {
+		std::random_device rd;  //Will be used to obtain a seed for the random number engine
+		std::mt19937 gen(rd()); //Standard mersenne_twister_engine seeded with rd()
+		std::uniform_real_distribution<> dis(0, 1);
+
+		int numDithRays = 16;
+		for (int i = 0; i < numDithRays; ++i) {
+			glm::vec3 dCenter = pixel->pos;
+			dCenter.x -= options->pixelW / 2;
+			dCenter.y -= options->pixelH / 2;
+			dCenter.x += options->pixelW * dis(gen);
+			dCenter.y -= options->pixelH * dis(gen);
 
 			glm::vec3 direction = glm::normalize(dCenter - scene->camera->pos);
 			rays.push_back(new Ray(scene->camera->pos, direction));
