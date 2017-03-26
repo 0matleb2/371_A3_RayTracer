@@ -14,11 +14,11 @@ void Options::chooseOptions() {
 
 	bool choosingScene = true;
 	while (choosingScene) {
-		std::cout << "Which scene would you like to render? (1-7)" << std::endl;
+		std::cout << "Which scene would you like to render? (1-10)" << std::endl;
 		std::cout << "Choose an option:  ";
 
 		int i = getUserInputInteger();
-		if (i >= 1 && i <= 7) {
+		if (i >= 1 && i <= 10) {
 			sceneNum = i;
 			choosingScene = false;
 		}

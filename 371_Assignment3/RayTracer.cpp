@@ -326,7 +326,7 @@ glm::vec3 RayTracer::trace(Scene * scene, Ray * ray, int depth) {
 	}
 
 	glm::vec3 intersection = ray->orig + tmin*ray->dir;
-	glm::vec3 color = accLight(scene, intersection, obj);
+	glm::vec3 color = accLight(scene, intersection, obj, norm, -ray->dir);
 
 
 	return color;
@@ -360,55 +360,65 @@ bool RayTracer::solveQuadratic(const float & a, const float & b, const float & c
 
 
 
-glm::vec3 RayTracer::accLight(Scene* scene, glm::vec3 intersection, SceneGeometry * obj) {
+glm::vec3 RayTracer::accLight(Scene* scene, glm::vec3 intersection, SceneGeometry * obj, glm::vec3 norm, glm::vec3 v) {
 	glm::vec3 color = obj->ambColor;
 
-	//for (auto light : scene->lights) {
+	for (auto light : scene->lights) {
 
-	//	float t;
-	//	float tmin = glm::distance(light->pos, intersection);
-	//	glm::vec3 n;
-	//	bool shadowed = false;
+		float t;
+		float tmin = glm::distance(light->pos, intersection);
+		glm::vec3 n;
+		bool shadowed = false;
 
-	//	Ray* shadowRay = new Ray(intersection, glm::normalize(light->pos - intersection));
+		glm::vec3 shadowDir = glm::normalize(light->pos - intersection);
+		float o = 0.1;
+		glm::vec3 origOffset = o * shadowDir;
+		//glm::vec3 origOffset = glm::vec3(shadowDir.x * o, shadowDir.y * o, shadowDir.z * o);
+		Ray* shadowRay = new Ray(intersection + origOffset, shadowDir);
 
-	//	// Intersect each sphere
-	//	for (int i = 0, m = scene->spheres.size(); i < m; ++i) {
-	//		if (RayTracer::intersectRaySphere(shadowRay, scene->spheres[i], t, n)) {
-	//			if (t < tmin) {
-	//				shadowed = true;
-	//				break;
-	//			}
-	//		}
-	//	}
+		// Intersect each sphere
+		for (int i = 0, m = scene->spheres.size(); i < m; ++i) {
+			if (RayTracer::intersectRaySphere(shadowRay, scene->spheres[i], t, n)) {
+				if (t < tmin) {
+					shadowed = true;
+					break;
+				}
+			}
+		}
 
-	//	if (!shadowed) {
-	//		// Intersect each triangle
-	//		for (int i = 0, m = scene->triangles.size(); i < m; ++i) {
-	//			if (RayTracer::intersectRayTriangle(shadowRay, scene->triangles[i], t, n)) {
-	//				if (t < tmin) {
-	//					shadowed = true;
-	//				}
-	//			}
-	//		}
-	//	}
+		if (!shadowed) {
+			// Intersect each triangle
+			for (int i = 0, m = scene->triangles.size(); i < m; ++i) {
+				if (RayTracer::intersectRayTriangle(shadowRay, scene->triangles[i], t, n)) {
+					if (t < tmin) {
+						shadowed = true;
+						break;
+					}
+				}
+			}
+		}
 
-	//	if (!shadowed) {
-	//		// Intersect the plane
-	//		if (RayTracer::intersectRayPlane(shadowRay, scene->plane, t, n)) {
-	//			if (t < tmin) {
-	//				shadowed = true;
-	//			}
-	//		}
-	//	}
+		if (!shadowed) {
+			// Intersect the plane
+			for (int i = 0, m = scene->planes.size(); i < m; ++i) {
+				if (RayTracer::intersectRayPlane(shadowRay, scene->planes[i], t, n)) {
+					if (t < tmin) {
+						shadowed = true;
+						break;
+					}
+				}
+			}
+		}
 
-	//	if (!shadowed) {
-	//		color += light->color; //LEFT OFF HEREEEE PHONG ETC
-	//	}
+		if (!shadowed) {
+			color += phong(light, shadowRay, obj, norm, v);
+		}
 
-	//}
+	}
 
-	return color;
+	glm::vec3 clamp = glm::vec3(glm::min(1.0f, color.r), glm::min(1.0f, color.g), glm::min(1.0f, color.b));
+
+	return clamp;
 
 }
 
@@ -464,4 +474,20 @@ Image * RayTracer::downsample(Image * image, int & downsampledPixels, int pixels
 	Image * dImage = new Image(dWidth, dHeight, dPixels);
 
 	return dImage;
+}
+
+glm::vec3 RayTracer::phong(Light * light, Ray * shadowRay, SceneGeometry * obj, glm::vec3 norm, glm::vec3 v) {
+	glm::vec3 l = shadowRay->dir;
+	glm::vec3 r = 2 * glm::dot(l, norm) * norm - l;
+
+	float ldotn = glm::dot(l, norm);
+	float rdotv = glm::dot(r, v);
+
+	glm::vec3 spec = obj->speColor * pow(glm::max(0.0f, rdotv), obj->shiny);
+	glm::vec3 dif = obj->difColor * abs(ldotn);
+
+	glm::vec3 nothing = glm::vec3(0.0f);
+	glm::vec3 color = light->color * (dif + spec);
+
+	return color;
 }

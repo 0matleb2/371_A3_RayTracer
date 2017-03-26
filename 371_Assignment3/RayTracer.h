@@ -39,11 +39,13 @@ private:
 
 	static bool solveQuadratic(const float & a, const float & b, const float & c, float & x0, float & x1);
 
-	static glm::vec3 accLight(Scene * scene, glm::vec3 intersection, SceneGeometry * obj);
+	static glm::vec3 accLight(Scene * scene, glm::vec3 intersection, SceneGeometry * obj, glm::vec3 norm, glm::vec3 v);
 
 	static glm::vec3 average(std::vector<glm::vec3> traces);
 
 	static Image * downsample(Image * image, int & downsampledPixels, int pixelsToDownsample, int & lastPercent);
+
+	static glm::vec3 phong(Light * light, Ray * shadowRay, SceneGeometry * obj, glm::vec3 norm, glm::vec3 v);
 };
 
 
