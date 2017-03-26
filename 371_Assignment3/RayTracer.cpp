@@ -8,6 +8,7 @@
 
 #define PI 3.14159265
 #define EPSILON 0.000001
+#define DMAX 2
 
 
 
@@ -55,7 +56,7 @@ Image* RayTracer::render(Scene * scene, Options * options) {
 	int downsampledPixels = 0;
 	int lastPercent = 0;
 	int n = image->resH * image->resW;
-	int downsamplesTimes;
+	int downsamplesTimes = 0;
 	if (options->antialiasing == 1 || options->antialiasing == 2) {
 		downsamplesTimes = 1;
 	}
@@ -361,8 +362,16 @@ glm::vec3 RayTracer::trace(Scene * scene, Ray * ray, int depth) {
 	}
 
 	glm::vec3 intersection = ray->orig + tmin*ray->dir;
-	glm::vec3 color = accLight(scene, intersection, obj, norm, -ray->dir);
 
+	float globalReflectivity = 0.15;
+
+	glm::vec3 reflectDir = 2 * glm::dot(-ray->dir, norm) * norm - (-ray->dir);
+	glm::vec3 offsetOrig = intersection + 0.1f * reflectDir;
+	Ray * reflectRay = new Ray(offsetOrig, reflectDir);
+
+	glm::vec3 color = (1-globalReflectivity) * accLight(scene, intersection, obj, norm, -ray->dir) + globalReflectivity * trace(scene, reflectRay, depth + 1);
+
+	delete reflectRay;
 
 	return color;
 }
@@ -448,6 +457,8 @@ glm::vec3 RayTracer::accLight(Scene* scene, glm::vec3 intersection, SceneGeometr
 		if (!shadowed) {
 			color += phong(light, shadowRay, obj, norm, v);
 		}
+
+		delete shadowRay;
 
 	}
 
