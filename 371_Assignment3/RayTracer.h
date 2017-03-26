@@ -19,8 +19,6 @@
 class RayTracer {
 public:
 
-	static std::vector<Ray*> rays;
-
 	static Image* render(Scene * scene, Options * options);
 
 	static Image* generatePixels(Scene * scene, Options * options);

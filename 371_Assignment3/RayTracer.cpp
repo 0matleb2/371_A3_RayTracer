@@ -13,7 +13,6 @@
 
 std::mutex mtx;
 
-std::vector<Ray*> RayTracer::rays = std::vector<Ray*>();
 
 int sumNdiv4i(int n, int i) {
 	int sum = 0;
@@ -90,18 +89,16 @@ Image* RayTracer::render(Scene * scene, Options * options) {
 	int lastPercent = 0;
 	int n = image->resH * image->resW;
 	int downsamplesTimes = 0;
-	if (options->antialiasing == 1 || options->antialiasing == 2) {
+	if (options->antialiasing == 2 || options->antialiasing == 3) {
 		downsamplesTimes = 1;
 	}
-	else if (options->antialiasing == 3) {
-		downsamplesTimes = 2;
-	}
+
 	int pixelsToDown = sumNdiv4i(n, downsamplesTimes);
 
 	for (int d = downsamplesTimes; d > 0; d--) {
 		image = downsample(image, downsampledPixels, pixelsToDown, lastPercent);
 	}
-	printf("\n");
+	if (downsamplesTimes > 0) printf("\n");
 
 	return image;
 
@@ -120,20 +117,17 @@ Image* RayTracer::generatePixels(Scene * scene, Options * options) {
 
 
 	int renderedResH;
-	if (options->antialiasing == 0) {
+	if (options->antialiasing == 0 || options->antialiasing == 1) {
 		renderedResH = options->outputHeight;
 	}
-	else if (options->antialiasing == 1 || options->antialiasing == 2) {
+	else if (options->antialiasing == 2 || options->antialiasing == 3) {
 		renderedResH = options->outputHeight * 2;
-	}
-	else if (options->antialiasing == 3) {
-		renderedResH = options->outputHeight * 4;
 	}
 
 	int renderedResW = static_cast<int>(round(renderedResH * scene->camera->ar));
 
 	std::cout << "Rendering at resolution: " << renderedResW << " x " << renderedResH << std::endl;
-	std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+	std::this_thread::sleep_for(std::chrono::milliseconds(500));
 
 	float sHeight = 2 * scene->camera->fl * tan((scene->camera->fov / 2) * PI / 180);
 	float sWidth = scene->camera->ar * sHeight;
@@ -200,7 +194,7 @@ std::vector<Ray*> RayTracer::generateRays(Scene * scene, Options * options, Pixe
 		std::mt19937 gen(rd()); //Standard mersenne_twister_engine seeded with rd()
 		std::uniform_real_distribution<> dis(0, 1);
 
-		int numDithRays = 4;
+		int numDithRays = 8;
 		for (int i = 0; i < numDithRays; ++i) {
 			glm::vec3 dCenter = pixel->pos;
 			dCenter.x -= options->pixelW / 2;
