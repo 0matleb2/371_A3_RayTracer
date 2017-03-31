@@ -1,6 +1,6 @@
 #pragma once
 
-#include "glm.hpp"
+#include <GLM\glm.hpp>
 
 
 class SceneGeometry {
